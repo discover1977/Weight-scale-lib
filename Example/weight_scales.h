@@ -10,7 +10,6 @@
 
 #include <stdint.h>
 
-#define ZERO_SET_ERROR		0
 #define SHIFT_HX711_DATA	0
 
 void WSCALES_Init();

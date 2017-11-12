@@ -13,7 +13,7 @@
 #include "HX711.h"
 #include "weight_scales.h"
 
-#define CALIBRATION_AVERAGE	10
+#define CALIBRATION_AVERAGE	50
 #define MES_AVERAGE	5
 
 #define BUTTON_PRESS	BitIsClear(PINA, 6)
@@ -51,10 +51,6 @@ void set_zero(uint8_t average)
 
 void calibration(uint8_t average)
 {
-	MAX72xx_Clear(0);
-	MAX72xx_Clear(1);
-	MAX72xx_OutSym("CALL", 4);
-	_delay_ms(5000);
 	MAX72xx_OutSym("-  -", 8);
 	Param.CalibrationFactor = WSCALES_Calibrate(1286, CALIBRATION_AVERAGE);
 	MAX72xx_OutSym("--------", 8);
@@ -67,12 +63,13 @@ ISR(TIMER0_COMP_vect)
 
 	if(BUTTON_PRESS) {
 		if(Cnt < 2000) Cnt++;
+		if (Cnt >= 500) ButtonCode = Long;
 	}
 	else {
 		if((Cnt >= 50) && (Cnt <= 200)) ButtonCode = Short;
-		else if (Cnt >= 1000) ButtonCode = Long;
 		Cnt = 0;
 	}
+
 }
 
 int main()
@@ -96,6 +93,10 @@ int main()
 	set_zero(CALIBRATION_AVERAGE);
 
 	if(Param.Init == 0xFF) {
+		MAX72xx_Clear(0);
+		MAX72xx_Clear(1);
+		MAX72xx_OutSym("CALL", 4);
+		_delay_ms(5000);
 		calibration(CALIBRATION_AVERAGE);
 		Param.Init = 0x01;
 		save_eeprom();
@@ -109,7 +110,7 @@ int main()
 	while(1)
 	{
 		Weigth = WSCALES_GetWeight(MES_AVERAGE);
-		MAX72xx_OutIntFormat((int32_t)Weigth, 1, 8, 0);
+		MAX72xx_OutIntFormat((int32_t)Weigth, 1, 8, 4);
 
 		if( ButtonCode == Short ) {
 			while(BUTTON_PRESS);
@@ -117,6 +118,10 @@ int main()
 			ButtonCode = Release;
 		}
 		if( ButtonCode == Long ) {
+			MAX72xx_Clear(0);
+			MAX72xx_Clear(1);
+			MAX72xx_OutSym("CALL", 4);
+			_delay_ms(5000);
 			while(BUTTON_PRESS);
 			calibration(CALIBRATION_AVERAGE);
 			ButtonCode = Release;

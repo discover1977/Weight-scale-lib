@@ -38,7 +38,7 @@ uint32_t WSCALES_GetADCData(uint8_t average) {
 }
 
 uint32_t WSCALE_SetZero(uint8_t average){
-	Zero = WSCALES_GetADCData(average);	// + ZERO_SET_ERROR;
+	Zero = WSCALES_GetADCData(average);
 	return Zero;
 }
 

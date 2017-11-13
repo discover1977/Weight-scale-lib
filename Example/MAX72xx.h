@@ -39,7 +39,7 @@
 #define INTENSITY		0x0A
 #define SCAN_LIMIT		0x0B
 #define SHUTDOWN		0x0C
-#define DISPLAY_TEST	0x0D
+#define DISPLAY_TEST	0x0F
 /*********************************************************/
 
 /****************** Code B Font MAX72xx ******************/

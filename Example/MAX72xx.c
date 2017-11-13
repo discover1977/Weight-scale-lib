@@ -127,10 +127,12 @@ void MAX72xx_Init(uint8_t intensity)
 	if (intensity > 15) intensity= 5;
 	SPI_MasterInit();
 	for (int i = 0; i < MAX72XX_NUMBERS; i++) {
-		MAX72xx_Send(i, SHUTDOWN, 0x01);
+		MAX72xx_Send(i, DISPLAY_TEST, 0x00);
 		MAX72xx_Send(i, SCAN_LIMIT, 0x07);
+		// Decode mode - 0
 		MAX72xx_Send(i, INTENSITY, (0x0F & intensity));
 		MAX72xx_Clear(i);
+		MAX72xx_Send(i, SHUTDOWN, 0x01);
 	}
 }
 

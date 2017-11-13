@@ -8,6 +8,7 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
 
 #include "MAX72xx.h"
 #include "HX711.h"
@@ -47,6 +48,8 @@ void set_zero(uint8_t average)
 	_delay_ms(2000);
 	WSCALE_SetZero(CALIBRATION_AVERAGE);
 	MAX72xx_OutSym("--------", 8);
+	MAX72xx_Clear(0);
+	MAX72xx_Clear(1);
 }
 
 void calibration(uint8_t average)
@@ -54,6 +57,8 @@ void calibration(uint8_t average)
 	MAX72xx_OutSym("-  -", 8);
 	Param.CalibrationFactor = WSCALES_Calibrate(1286, CALIBRATION_AVERAGE);
 	MAX72xx_OutSym("--------", 8);
+	MAX72xx_Clear(0);
+	MAX72xx_Clear(1);
 }
 
 ISR(TIMER0_COMP_vect)
@@ -74,7 +79,7 @@ ISR(TIMER0_COMP_vect)
 
 int main()
 {
-	float Weigth = 0;
+	int32_t Weigth = 0;
 
 	MAX72xx_Init(7);
 	WSCALES_Init();
@@ -95,7 +100,7 @@ int main()
 	if(Param.Init == 0xFF) {
 		MAX72xx_Clear(0);
 		MAX72xx_Clear(1);
-		MAX72xx_OutSym("CALL", 4);
+		MAX72xx_OutSym("CAL-", 4);
 		_delay_ms(5000);
 		calibration(CALIBRATION_AVERAGE);
 		Param.Init = 0x01;
@@ -110,7 +115,12 @@ int main()
 	while(1)
 	{
 		Weigth = WSCALES_GetWeight(MES_AVERAGE);
-		MAX72xx_OutIntFormat((int32_t)Weigth, 1, 8, 4);
+		if (abs(Weigth) < 1000) {
+			MAX72xx_OutInt(0, Weigth, 0);
+		}
+		else {
+			MAX72xx_OutInt(0, Weigth, 4);
+		}
 
 		if( ButtonCode == Short ) {
 			while(BUTTON_PRESS);
@@ -120,7 +130,7 @@ int main()
 		if( ButtonCode == Long ) {
 			MAX72xx_Clear(0);
 			MAX72xx_Clear(1);
-			MAX72xx_OutSym("CALL", 4);
+			MAX72xx_OutSym("CAL-", 4);
 			_delay_ms(5000);
 			while(BUTTON_PRESS);
 			calibration(CALIBRATION_AVERAGE);

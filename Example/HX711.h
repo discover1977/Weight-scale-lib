@@ -11,10 +11,10 @@
 #include <avr/io.h>
 
 #define HX711_DATA_PORT 	PORTC
-#define HX711_DATA_PIN	1
+#define HX711_DATA_PIN	4
 
 #define HX711_SCK_PORT		PORTC
-#define HX711_SCK_PIN	0
+#define HX711_SCK_PIN	5
 
 enum Gain {
 	Gain_128 = 1,

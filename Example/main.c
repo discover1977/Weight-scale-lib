@@ -14,10 +14,10 @@
 #include "HX711.h"
 #include "weight_scales.h"
 
-#define CALIBRATION_AVERAGE	50
+#define CALIBRATION_AVERAGE	25
 #define MES_AVERAGE	5
 
-#define BUTTON_PRESS	BitIsClear(PINA, 6)
+#define BUTTON_PRESS	BitIsClear(PIND, 2)
 
 enum Code {
 	Release,
@@ -39,29 +39,7 @@ void save_eeprom()
 	sei();
 }
 
-void set_zero(uint8_t average)
-{
-	MAX72xx_Clear(0);
-	MAX72xx_Clear(1);
-	MAX72xx_OutSym("SEt ", 4);
-	MAX72xx_OutSym("nULL", 8);
-	_delay_ms(2000);
-	WSCALE_SetZero(CALIBRATION_AVERAGE);
-	MAX72xx_OutSym("--------", 8);
-	MAX72xx_Clear(0);
-	MAX72xx_Clear(1);
-}
-
-void calibration(uint8_t average)
-{
-	MAX72xx_OutSym("-  -", 8);
-	Param.CalibrationFactor = WSCALES_Calibrate(1286, CALIBRATION_AVERAGE);
-	MAX72xx_OutSym("--------", 8);
-	MAX72xx_Clear(0);
-	MAX72xx_Clear(1);
-}
-
-ISR(TIMER0_COMP_vect)
+ISR(TIMER0_COMPA_vect)
 {
 	static uint16_t Cnt = 0;
 	TCNT0 = 0x00;
@@ -85,56 +63,66 @@ int main()
 	WSCALES_Init();
 
 	// Port init
-	SetBit(PORTA, 6);
+	SetBit(PORTD, 2);
 
     //  Timer 0 Initialization
-    TCCR0 = ( 1 << CS02 ) | ( 0 << CS01 ) | ( 1 << CS00 );
+	TCCR0A = 0x00;
+	TCCR0B = ( 1 << CS02 ) | ( 0 << CS01 ) | ( 1 << CS00 );
     TCNT0 = 0x00;
-    OCR0 = 0x26;
-    TIMSK = ( 1 << OCIE0 );
+    OCR0A = 0x26;
+    TIMSK0 = ( 1 << OCIE0A );
 
 	eeprom_read_block( (uint8_t*)&Param, 0, sizeof( Param ) );
 
-	set_zero(CALIBRATION_AVERAGE);
+	MAX72xx_OutSym("--------", 8);
+	WSCALE_SetZero(CALIBRATION_AVERAGE);
+	MAX72xx_OutSym("   --   ", 8);
 
-	if(Param.Init == 0xFF) {
-		MAX72xx_Clear(0);
-		MAX72xx_Clear(1);
-		MAX72xx_OutSym("CAL-", 4);
-		_delay_ms(5000);
-		calibration(CALIBRATION_AVERAGE);
-		Param.Init = 0x01;
-		save_eeprom();
-	}
-	else {
+	if(Param.Init == 0x01) {
 		WSCALES_SetCalibrationFactor(Param.CalibrationFactor);
 	}
+
+	MAX72xx_Clear(0);
 
 	sei();
 
 	while(1)
 	{
-		Weigth = WSCALES_GetWeight(MES_AVERAGE);
-		if (abs(Weigth) < 1000) {
-			MAX72xx_OutInt(0, Weigth, 0);
+		if(Param.Init == 0x01) {
+			Weigth = WSCALES_GetWeight(MES_AVERAGE);
+			MAX72xx_OutIntFormat(Weigth, 3, 8, 6);
 		}
 		else {
-			MAX72xx_OutInt(0, Weigth, 4);
+			MAX72xx_OutSym("________", 8);
 		}
 
 		if( ButtonCode == Short ) {
 			while(BUTTON_PRESS);
-			set_zero(CALIBRATION_AVERAGE);
+			MAX72xx_OutSym("--------", 8);
+			WSCALE_SetZero(CALIBRATION_AVERAGE);
+			MAX72xx_OutSym("   --   ", 8);
+			_delay_ms(500);
+			MAX72xx_Clear(0);
 			ButtonCode = Release;
 		}
 		if( ButtonCode == Long ) {
 			MAX72xx_Clear(0);
-			MAX72xx_Clear(1);
-			MAX72xx_OutSym("CAL-", 4);
-			_delay_ms(5000);
+			MAX72xx_OutSym("===CA===", 8);
 			while(BUTTON_PRESS);
-			calibration(CALIBRATION_AVERAGE);
+			_delay_ms(1000);
+			MAX72xx_OutSym(" ==CA== ", 8);
+			_delay_ms(1000);
+			MAX72xx_OutSym("  =CA=  ", 8);
+			_delay_ms(1000);
+			MAX72xx_OutSym("   CA   ", 8);
+			_delay_ms(1000);
+			Param.CalibrationFactor = WSCALES_Calibrate(1286, CALIBRATION_AVERAGE);
+			Param.Init = 0x01;
+			MAX72xx_OutSym("= Good =", 8);
+			_delay_ms(500);
+			MAX72xx_Clear(0);
 			ButtonCode = Release;
+			save_eeprom();
 		}
 	}
 }

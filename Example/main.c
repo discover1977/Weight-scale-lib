@@ -110,20 +110,26 @@ int main()
 			if(Power == 1) {
 				MAX72xx_OutIntFormat(Weigth, 3, 8, 6);
 			}
-			else if ((Power == 0) && (Weigth > 50)){
-				MAX72xx_Clear(0);
-				for(int i = 0; i < 8; i++) {
-					_delay_ms(250);
+			else {
+				if (Weigth > 50) {
+					MAX72xx_Clear(0);
+					for(int i = 0; i < 4; i++) {
+						_delay_ms(250);
+						MAX72xx_OutSym("--------", 8);
+						_delay_ms(250);
+						MAX72xx_OutSym("        ", 8);
+					}
 					MAX72xx_OutSym("--------", 8);
-					_delay_ms(250);
-					MAX72xx_OutSym("        ", 8);
+					WSCALE_SetZero(CALIBRATION_AVERAGE);
+					MAX72xx_OutSym("   --   ", 8);
+					Power = 1;
 				}
-				MAX72xx_OutSym("--------", 8);
-				WSCALE_SetZero(CALIBRATION_AVERAGE);
-				MAX72xx_OutSym("   --   ", 8);
-				Power = 1;
+				if (Weigth < 0) {
+					MAX72xx_SetComma(1, 1);
+					WSCALE_SetZero(CALIBRATION_AVERAGE);
+					MAX72xx_SetComma(1, 0);
+				}
 			}
-
 		}
 		else {
 			MAX72xx_OutSym("________", 8);

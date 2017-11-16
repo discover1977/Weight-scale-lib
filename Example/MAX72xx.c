@@ -119,7 +119,7 @@ void SPI_MasterInit(void)
 
 	/* Enable SPI, Master, set clock rate fck/16 */
 	SPCR = 0;
-	SPCR = (0<<SPIE)|(1 << SPE)|(0 << DORD)|(1 << MSTR)|(1 << SPR1)|(1 << SPR0)|(0<<CPOL)|(0<<CPHA);
+	SPCR = (0<<SPIE)|(1 << SPE)|(0 << DORD)|(1 << MSTR)|(0 << SPR1)|(0 << SPR0)|(0<<CPOL)|(0<<CPHA);
 	SPSR = 0;
 	SPSR = (0<<SPI2X);
 }
